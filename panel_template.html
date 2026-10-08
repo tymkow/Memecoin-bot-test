@@ -1,0 +1,353 @@
+<title>Laboratorium memecoinów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Układ: pasek nagłówka z zakresem danych, zakładki tematyczne, w każdej najpierw liczby, potem wykresy i tabele. */
+:root {
+  --bg: #f3f4f1; --panel: #ffffff; --ink: #172021; --muted: #5d6967; --line: #dde2de;
+  --accent: #0d7c6b; --accent-soft: #d6efe9; --good: #1f8a4c; --bad: #c2412d; --warn: #b7791f; --chip: #eef1ee;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1415; --panel: #161d1e; --ink: #e5ece9; --muted: #93a19d; --line: #273133;
+  --accent: #3cc2a8; --accent-soft: #163a35; --good: #4cc27c; --bad: #ef7461; --warn: #e2a64a; --chip: #1e2728; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1415; --panel: #161d1e; --ink: #e5ece9; --muted: #93a19d; --line: #273133;
+  --accent: #3cc2a8; --accent-soft: #163a35; --good: #4cc27c; --bad: #ef7461; --warn: #e2a64a; --chip: #1e2728; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; }
+header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+h1 { font: 800 clamp(26px, 4vw, 38px)/1.1 var(--f-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.meta { color: var(--muted); font-size: 13px; }
+.meta b { font-family: var(--f-mono); font-weight: 600; color: var(--ink); }
+nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 20px; }
+nav button { font: 600 13px var(--f-body); color: var(--muted); background: transparent; border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+nav button[aria-selected="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h2 { font: 600 20px/1.2 var(--f-display); margin: 28px 0 10px; }
+h2:first-child { margin-top: 0; }
+p.lead { color: var(--muted); max-width: 70ch; margin: 0 0 14px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.tile .k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font: 600 24px/1.2 var(--f-mono); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.tile .s { font-size: 12px; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.card h3 { font: 600 14px var(--f-body); margin: 0 0 8px; }
+.chart { position: relative; height: 300px; }
+.chart.tall { height: 420px; }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  border-bottom: 1px solid var(--line); padding: 6px 8px; white-space: nowrap; }
+td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.chip.ok { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+.chip.nie { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+.chip.niejasne { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.seg button { font: 500 13px var(--f-body); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.mapbox { position: relative; height: min(70vh, 620px); }
+.mapbox canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 6px 9px; border-radius: 6px; max-width: 280px; }
+section[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Laboratorium memecoinów</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+  <nav role="tablist" id="tabs"></nav>
+
+  <section id="t-przeglad" data-tab="Przegląd">
+    <div class="tiles" id="kpi"></div>
+    <h2>Wynik portfeli od startu</h2>
+    <p class="lead">Suma zrealizowanego wyniku w $ (paper, po kosztach) po każdej zamkniętej pozycji. Wszystkie portfele startowały z $1000.</p>
+    <div class="card"><div class="chart tall"><canvas id="c-cum"></canvas></div></div>
+  </section>
+
+  <section id="t-portfele" data-tab="Portfele" hidden>
+    <div class="grid2">
+      <div class="card"><h3>Suma wyniku ($)</h3><div class="chart tall"><canvas id="c-pnl"></canvas></div></div>
+      <div class="card"><h3>Średni wynik na pozycję (%)</h3><div class="chart tall"><canvas id="c-avg"></canvas></div></div>
+    </div>
+    <h2>Szczegóły</h2>
+    <div class="card tbl"><table id="tb-pf"></table></div>
+  </section>
+
+  <section id="t-zywo" data-tab="Na żywo" hidden>
+    <p class="lead">Portfele uruchomione 7.10 (12:16) oceniamy według kryteriów zapisanych przed wynikami: werdykt dopiero przy 100 pozycjach lub parach.</p>
+    <div class="tiles" id="kpi-live"></div>
+    <h2>Średni wynik na pozycję od 7.10 12:16</h2>
+    <div class="card"><div class="chart"><canvas id="c-live"></canvas></div>
+      <div class="note">Liczby obok nazw to liczba zamkniętych pozycji; przy kilkunastu pozycjach różnice są przypadkowe.</div></div>
+  </section>
+
+  <section id="t-rynek" data-tab="Rynek pump.fun" hidden>
+    <div class="tiles" id="kpi-mk"></div>
+    <h2>Aktywność na godzinę</h2>
+    <p class="lead">Ze zbieracza (strumień pump.fun przez darmowy RPC). Spadki do zera to wyłączony komputer albo dziury w danych.</p>
+    <div class="card"><div class="chart tall"><canvas id="c-mk"></canvas></div></div>
+  </section>
+
+  <section id="t-badania" data-tab="Badania" hidden>
+    <div class="tiles" id="kpi-res"></div>
+    <h2>Wszystkie hipotezy i werdykty</h2>
+    <div class="card tbl"><table id="tb-res"></table></div>
+  </section>
+
+  <section id="t-traderzy" data-tab="Traderzy" hidden>
+    <p class="lead">Wynik ich własnych transakcji na krzywej pump.fun w oknie 4-7.10. Żadnej z ich przewag nie dało się przenieść na nasze opóźnienie.</p>
+    <div class="grid2">
+      <div class="card"><h3>Ich wynik na pozycję (%)</h3><div class="chart"><canvas id="c-tr"></canvas></div></div>
+      <div class="card"><h3>Kopia z opóźnieniem (% na pozycję)</h3><div class="chart"><canvas id="c-copy"></canvas></div></div>
+    </div>
+    <h2>Kto to jest</h2>
+    <div class="card tbl"><table id="tb-tr"></table></div>
+  </section>
+
+  <section id="t-mapy" data-tab="Mapy portfeli" hidden>
+    <p class="lead">Sieci portfeli wykryte w strumieniu pump.fun. Najedź na kropkę, żeby zobaczyć szczegóły; kropki można przeciągać.</p>
+    <div class="seg" id="map-pick"></div>
+    <div class="card"><p class="note" id="map-about" style="margin:0 0 8px"></p>
+      <div class="mapbox"><canvas id="map"></canvas><div class="tip" id="map-tip" hidden></div></div>
+      <div class="note" id="map-stat"></div></div>
+    <div class="grid2" id="bundle-extra" style="margin-top:14px">
+      <div class="card"><h3>Migracja wg liczby obcych portfeli w slocie startu</h3><div class="chart"><canvas id="c-bund"></canvas></div></div>
+      <div class="card"><h3>Ile tokenów w każdej grupie</h3><div class="chart"><canvas id="c-bundn"></canvas></div></div>
+    </div>
+  </section>
+
+  <section id="t-koszty" data-tab="Koszty i arbitraż" hidden>
+    <div class="grid2">
+      <div class="card"><h3>Zużyte kredyty Helius (plan darmowy, 1 mln / mies.)</h3><div class="chart"><canvas id="c-hel"></canvas></div></div>
+      <div class="card"><h3>Arbitraż między pulami (3,5 h pomiaru)</h3><div class="tiles" id="kpi-arb"></div>
+        <div class="note">Mediana wyniku kup-na-A / sprzedaj-na-B przy 0,1 / 0,5 / 2 SOL. Zyskowne okazje znikały przed ponownym kwotowaniem po 10 s.</div></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const D = /*__DATA__*/null;
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (x, d = 0) => x == null ? "–" : x.toLocaleString("pl-PL", { minimumFractionDigits: d, maximumFractionDigits: d });
+const sign = (x, d = 1) => x == null ? "–" : (x > 0 ? "+" : "") + fmt(x, d);
+const cls = x => x > 0 ? "pos" : x < 0 ? "neg" : "";
+const day = t => new Date(t * 1000).toLocaleString("pl-PL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const tile = (k, v, s = "") => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+
+$("#meta").innerHTML = `dane bota <b>${day(D.decisions.t0)}</b> – <b>${day(D.decisions.t1)}</b> · strumień <b>${day(D.tot.t0)}</b> – <b>${day(D.tot.t1)}</b> · wygenerowano ${D.generated}`;
+
+// zakładki
+const secs = [...document.querySelectorAll("section[data-tab]")];
+let current = 0;
+try { const h = location.hash.slice(1); const i = secs.findIndex(s => s.id === "t-" + h); if (i >= 0) current = i; } catch (e) {}
+const tabs = $("#tabs");
+secs.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.textContent = s.dataset.tab; b.setAttribute("role", "tab"); b.id = "tab-" + s.id;
+  b.onclick = () => show(i); tabs.appendChild(b);
+});
+function show(i) {
+  current = i;
+  secs.forEach((s, j) => { s.hidden = j !== i; tabs.children[j].setAttribute("aria-selected", j === i); });
+  draw();
+}
+
+// liczby
+const pf = D.portfolios;
+const totPnl = pf.reduce((a, p) => a + p.pnl, 0), totN = pf.reduce((a, p) => a + p.n, 0);
+const best = [...pf].filter(p => p.n >= 30).sort((a, b) => b.avg - a.avg)[0];
+$("#kpi").innerHTML = tile("zamknięte pozycje", fmt(totN), `${D.open} otwartych, ${pf.length} portfeli`)
+  + tile("wynik wszystkich portfeli", `<span class="${cls(totPnl)}">${sign(totPnl, 0)} $</span>`, "paper, po kosztach")
+  + tile("najmniej traci (>= 30 poz.)", best.name, `${sign(best.avg)}% na pozycję, ${best.n} poz.`)
+  + tile("ocenione tokeny", fmt(D.decisions.tokens), `${fmt(D.decisions.n)} decyzji bota`)
+  + tile("transakcje pump.fun", fmt(D.tot.trades), `${fmt(D.tot.mints)} startów, ${fmt(D.tot.migr)} migracji`)
+  + tile("hipotezy sprawdzone", D.research.length, `${D.research.filter(r => r[3] === "ok").length} działa`);
+
+$("#tb-pf").innerHTML = `<tr><th>portfel</th><th>pozycji</th><th>suma $</th><th>śr. na poz.</th><th>wygrane</th><th>PF</th><th>wyjść stopem</th><th>od</th></tr>`
+  + pf.map(p => `<tr><td>${p.name}</td><td class="num">${p.n}</td><td class="num ${cls(p.pnl)}">${sign(p.pnl, 0)}</td>
+     <td class="num ${cls(p.avg)}">${sign(p.avg)}%</td><td class="num">${p.win}%</td><td class="num">${p.pf ?? "–"}</td>
+     <td class="num">${p.stops}%</td><td class="num">${day(p.start)}</td></tr>`).join("");
+
+const live = D.live;
+$("#kpi-live").innerHTML = tile("wyjścia szybkim stopem", D.fast.n, "stop_fast od 7.10")
+  + tile("czas reakcji stopu", D.fast.median_s == null ? "–" : fmt(D.fast.median_s, 1) + " s", "mediana; wcześniej ~12 s")
+  + live.filter(l => ["safety_fast", "random_fast_s6"].includes(l.name)).map(l => tile(l.name, `${l.n} / 100`, "pozycji do oceny")).join("");
+
+$("#kpi-mk").innerHTML = tile("transakcje", fmt(D.tot.trades), "na krzywej pump.fun")
+  + tile("starty tokenów", fmt(D.tot.mints)) + tile("migracje", fmt(D.tot.migr), `${fmt(D.tot.migr / D.tot.mints * 100, 1)}% startów`)
+  + tile("portfele", fmt(D.tot.wallets)) + tile("dziury w danych", fmt(D.tot.gaps), `${fmt(D.tot.gap_h, 1)} h łącznie`);
+
+const vc = { ok: 0, niejasne: 0, nie: 0 }; D.research.forEach(r => vc[r[3]]++);
+const vLabel = { ok: "działa", niejasne: "niejasne", nie: "nie działa" };
+$("#kpi-res").innerHTML = tile("działa", vc.ok, "testowane dalej na żywo") + tile("niejasne", vc.niejasne, "za mało danych")
+  + tile("nie działa", vc.nie, "odrzucone");
+$("#tb-res").innerHTML = `<tr><th>obszar</th><th>pytanie</th><th>wynik</th><th>werdykt</th></tr>`
+  + D.research.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><span class="chip ${r[3]}">${vLabel[r[3]]}</span></td></tr>`).join("");
+
+$("#tb-tr").innerHTML = `<tr><th>portfel</th><th>styl</th><th>pozycji</th><th>SOL</th><th>%/poz.</th><th>skąd przewaga</th></tr>`
+  + D.traders.map(t => `<tr><td>${t[0]}</td><td>${t[1]}</td><td class="num">${fmt(t[2])}</td><td class="num ${cls(t[3])}">${sign(t[3])}</td>
+     <td class="num ${cls(t[4])}">${sign(t[4])}%</td><td>${t[5]}</td></tr>`).join("");
+
+const A = D.arb;
+$("#kpi-arb").innerHTML = tile("kwotowań", A.quotes) + tile("zyskownych", A.gross_pos, `razem ${A.sol} SOL`)
+  + tile("żywych po 10 s", A.alive10s) + tile("mediana 0,1 / 0,5 / 2 SOL", `<span class="neg">${A.med01} / ${A.med05} / ${A.med2}%</span>`);
+
+// wykresy
+const charts = {};
+function mk(id, cfg) { if (charts[id]) charts[id].destroy(); charts[id] = new Chart($(id), cfg); }
+function base() {
+  Chart.defaults.color = css("--muted"); Chart.defaults.borderColor = css("--line");
+  Chart.defaults.font.family = css("--f-body"); Chart.defaults.font.size = 12;
+}
+const palette = () => [css("--accent"), "#7a6cf0", "#d9822b", "#3b8fd9", "#c2417f", "#8a9a3a", "#5d6967", "#b7791f"];
+const timeAxis = { type: "linear", ticks: { callback: v => day(v).slice(0, 5), maxTicksLimit: 8 }, grid: { display: false } };
+
+function draw() {
+  if (typeof Chart === "undefined") return;
+  base();
+  const id = secs[current].id, good = css("--good"), bad = css("--bad"), acc = css("--accent");
+  if (id === "t-przeglad") {
+    const pick = [...pf].sort((a, b) => b.n - a.n).slice(0, 8);
+    mk("#c-cum", { type: "line", data: { datasets: pick.map((p, i) => ({ label: p.name, data: p.series.map(([x, y]) => ({ x, y })),
+        borderColor: palette()[i % 8], borderWidth: p.name === "random_eligible" ? 3 : 1.6, pointRadius: 0, tension: .2 })) },
+      options: { maintainAspectRatio: false, interaction: { mode: "nearest", intersect: false },
+        scales: { x: timeAxis, y: { title: { display: true, text: "$" } } },
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 12 } },
+          tooltip: { callbacks: { title: it => day(it[0].parsed.x), label: it => `${it.dataset.label}: ${sign(it.parsed.y, 0)} $` } } } } });
+  }
+  if (id === "t-portfele") {
+    const bar = (key, unit) => ({ type: "bar", data: { labels: pf.map(p => p.name),
+        datasets: [{ data: pf.map(p => p[key]), backgroundColor: pf.map(p => p[key] >= 0 ? good : bad), borderRadius: 3 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: it => `${sign(it.parsed.x, unit === "%" ? 1 : 0)} ${unit}` } } },
+        scales: { y: { grid: { display: false } } } } });
+    mk("#c-pnl", bar("pnl", "$")); mk("#c-avg", bar("avg", "%"));
+  }
+  if (id === "t-zywo") {
+    const L = live.filter(l => l.avg != null);
+    mk("#c-live", { type: "bar", data: { labels: L.map(l => `${l.name} (${l.n})`),
+        datasets: [{ data: L.map(l => l.avg), backgroundColor: L.map(l => l.avg >= 0 ? good : bad), borderRadius: 3 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "% na pozycję" } }, x: { grid: { display: false } } } } });
+  }
+  if (id === "t-rynek") {
+    const M = D.market;
+    mk("#c-mk", { data: { labels: M.hours, datasets: [
+        { type: "line", label: "transakcje", data: M.trades, borderColor: acc, backgroundColor: css("--accent-soft"), fill: true, pointRadius: 0, yAxisID: "y", tension: .25 },
+        { type: "line", label: "starty tokenów", data: M.mints, borderColor: "#7a6cf0", pointRadius: 0, yAxisID: "y1", tension: .25 },
+        { type: "line", label: "migracje", data: M.migr, borderColor: "#d9822b", pointRadius: 0, yAxisID: "y1", tension: .25 }] },
+      options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+        scales: { x: { type: "category", ticks: { callback: (v, i) => day(M.hours[i]).slice(0, 11), maxTicksLimit: 8 }, grid: { display: false } },
+          y: { position: "left", title: { display: true, text: "transakcje / h" } },
+          y1: { position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "starty, migracje / h" } } },
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 12 } }, tooltip: { callbacks: { title: it => day(M.hours[it[0].dataIndex]) } } } } });
+  }
+  if (id === "t-traderzy") {
+    const T = D.traders;
+    mk("#c-tr", { type: "bar", data: { labels: T.map(t => t[0]), datasets: [{ data: T.map(t => t[4]),
+        backgroundColor: T.map(t => t[4] >= 0 ? good : bad), borderRadius: 3 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } } } } });
+    mk("#c-copy", { type: "line", data: { datasets: Object.entries(D.copy).map(([k, v], i) => ({ label: k,
+        data: v.map(([x, y]) => ({ x, y })), borderColor: palette()[[0, 2, 6][i]], pointRadius: 3, tension: .1 })) },
+      options: { maintainAspectRatio: false, scales: { x: { type: "linear", title: { display: true, text: "opóźnienie (s)" } },
+        y: { title: { display: true, text: "% na pozycję" } } }, plugins: { legend: { position: "bottom", labels: { boxWidth: 12 } } } } });
+  }
+  if (id === "t-mapy") drawMap();
+  if (id === "t-koszty") {
+    const H = D.helius;
+    mk("#c-hel", { type: "bar", data: { labels: H.map(h => h[0]), datasets: [{ data: H.map(h => h[1]), backgroundColor: acc, borderRadius: 3 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: it => fmt(it.parsed.x) + " kredytów" } } }, scales: { y: { grid: { display: false } } } } });
+  }
+}
+// mapy sieci portfeli (d3-force na canvasie)
+const MAPS = D.maps, MAP_NAMES = { floty: "Floty klonów", grupy: "Grupy kupujące razem", nasladowcy: "Naśladowcy traderów", bundle: "Bundle startu" };
+let mapKey = "floty", sim = null;
+if (MAPS) {
+  const pick = $("#map-pick");
+  Object.keys(MAP_NAMES).filter(k => MAPS[k]).forEach(k => {
+    const b = document.createElement("button"); b.textContent = MAP_NAMES[k]; b.dataset.k = k;
+    b.onclick = () => { mapKey = k; drawMap(); }; pick.appendChild(b);
+  });
+} else { $("#map-about").textContent = "Brak danych map: uruchom python -m analizy.mapy, potem python panel.py."; }
+function drawMap() {
+  if (!MAPS || typeof d3 === "undefined") return;
+  [...$("#map-pick").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.k === mapKey));
+  const M = MAPS[mapKey];
+  $("#map-about").textContent = M.about;
+  const ng = new Set(M.nodes.map(n => n.g)).size;
+  $("#map-stat").textContent = `${M.nodes.length} portfeli, ${M.links.length} powiązań, ${ng} ${mapKey === "nasladowcy" ? "traderów" : "grup"}`
+    + (M.stat ? ` · w całych danych: ${M.stat.groups} grup, ${M.stat.wallets} portfeli; sieć snajperów kupujących wszystko (${M.stat.sniper_net} portfeli) pominięta` : "")
+    + (M.share != null ? ` · tokenów z >= 2 obcymi portfelami w slocie startu: ${M.share}%` : "");
+  $("#bundle-extra").hidden = mapKey !== "bundle";
+  const cv = $("#map"), box = cv.parentElement, dpr = window.devicePixelRatio || 1;
+  const W = box.clientWidth, H = box.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const nodes = M.nodes.map(n => ({ ...n })), byId = new Map(nodes.map(n => [n.id, n]));
+  const links = M.links.filter(l => byId.has(l.s) && byId.has(l.t)).map(l => ({ source: l.s, target: l.t, w: l.w }));
+  const maxN = Math.max(1, ...nodes.map(n => n.n || 1)), maxW = Math.max(1, ...links.map(l => l.w));
+  const pal = palette(), ink = css("--ink"), line = css("--line"), muted = css("--muted"), good = css("--good"), bad = css("--bad");
+  const r = n => n.center ? 14 : 3 + 7 * Math.sqrt((n.n || 1) / maxN);
+  if (sim) sim.stop();
+  const dense = mapKey === "grupy" || mapKey === "bundle";
+  sim = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id).distance(mapKey === "nasladowcy" ? 90 : 24).strength(.6))
+    .force("charge", d3.forceManyBody().strength(dense ? -12 : -40))
+    .force("x", d3.forceX(W / 2).strength(.05)).force("y", d3.forceY(H / 2).strength(.07))
+    .force("collide", d3.forceCollide(d => r(d) + 1.5)).alphaDecay(.03).on("tick", paint);
+  function paint() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = line;
+    links.forEach(l => { ctx.lineWidth = .6 + 2.4 * l.w / maxW; ctx.beginPath(); ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y); ctx.stroke(); });
+    nodes.forEach(n => {
+      const rr = r(n);
+      n.x = Math.max(rr, Math.min(W - rr, n.x)); n.y = Math.max(rr, Math.min(H - rr, n.y));
+      ctx.beginPath(); ctx.arc(n.x, n.y, rr, 0, 7);
+      ctx.fillStyle = mapKey === "floty" && n.sol != null ? (n.sol >= 0 ? good : bad) : pal[n.g % pal.length];
+      ctx.globalAlpha = n.center ? 1 : .85; ctx.fill(); ctx.globalAlpha = 1;
+      if (n.center) { ctx.fillStyle = ink; ctx.font = `600 13px ${css("--f-body")}`; ctx.fillText(n.label, n.x + 17, n.y + 4); }
+    });
+  }
+  const tip = $("#map-tip");
+  const find = (x, y) => nodes.find(n => (n.x - x) ** 2 + (n.y - y) ** 2 <= (r(n) + 3) ** 2);
+  cv.onmousemove = e => {
+    const b = cv.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top, n = find(x, y);
+    if (!n) { tip.hidden = true; return; }
+    tip.hidden = false; tip.style.left = Math.max(0, Math.min(x + 12, W - 290)) + "px"; tip.style.top = (y + 12) + "px";
+    tip.textContent = `${n.label} · ${n.info}` + (n.sol != null ? ` · ten portfel ${n.sol > 0 ? "+" : ""}${n.sol} SOL na ${n.n} poz.` : "");
+  };
+  cv.onmouseleave = () => { tip.hidden = true; };
+  d3.select(cv).call(d3.drag().subject(e => find(e.x, e.y))
+    .on("start", e => { if (!e.active) sim.alphaTarget(.2).restart(); e.subject.fx = e.subject.x; e.subject.fy = e.subject.y; })
+    .on("drag", e => { e.subject.fx = e.x; e.subject.fy = e.y; })
+    .on("end", e => { if (!e.active) sim.alphaTarget(0); e.subject.fx = null; e.subject.fy = null; }));
+  if (mapKey === "bundle" && M.stats && typeof Chart !== "undefined") {
+    mk("#c-bund", { type: "bar", data: { labels: M.stats.map(s => s.k), datasets: [{ data: M.stats.map(s => s.mig), backgroundColor: css("--accent"), borderRadius: 3 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: it => it.parsed.y + "% zmigrowało" } } },
+        scales: { x: { title: { display: true, text: "obcych portfeli w slocie startu" }, grid: { display: false } }, y: { title: { display: true, text: "% migracji" } } } } });
+    mk("#c-bundn", { type: "bar", data: { labels: M.stats.map(s => s.k), datasets: [{ data: M.stats.map(s => s.n), backgroundColor: muted, borderRadius: 3 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { title: { display: true, text: "obcych portfeli w slocie startu" }, grid: { display: false } }, y: { title: { display: true, text: "tokenów" } } } } });
+  }
+}
+
+show(current);
+window.addEventListener("load", draw);
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw); } catch (e) {}
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>

@@ -1,0 +1,23 @@
+{
+ "target": "rug",
+ "intercept": -1.334493002537939,
+ "coef": {
+  "frac_insider": -0.18658495967031355,
+  "frac_shared_funder": 0.11437433035074378,
+  "young_insider_dump": -0.004755959340434956,
+  "frac_sniper": -0.09360538654520163
+ },
+ "mean": {
+  "frac_insider": 0.6193058132343846,
+  "frac_shared_funder": 0.03625541125541126,
+  "young_insider_dump": 0.024999999999999988,
+  "frac_sniper": 0.2988512677798393
+ },
+ "std": {
+  "frac_insider": 0.3897586762974779,
+  "frac_shared_funder": 0.11758878889397516,
+  "young_insider_dump": 0.0656922841015304,
+  "frac_sniper": 0.3171402184525829
+ },
+ "trained_on": "210 token\u00f3w eksploracji (migracja + 30 min), 06.10.2026"
+}

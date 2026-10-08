@@ -1,0 +1,22 @@
+# dane i logi bota (duże, zmieniają się co sekundę) - w repozytorium tylko kod
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.log
+__pycache__/
+*.pyc
+
+# cudze repozytoria do nauki (osobne licencje, tylko do czytania)
+inspiracje/
+
+# lokalne nadpisania i klucze API - nigdy do repozytorium
+config.json
+.env
+secrets.json
+
+# dane pośrednie analiz (adresy portfeli, duże)
+analizy/*.csv
+analizy/fb_score_model_latest.json
+analizy/rug2/blind/oceny.csv

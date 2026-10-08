@@ -1,0 +1,33 @@
+{
+ "target": "wynik po kosztach > 0 (obecne wyj\u015bcie)",
+ "features": [
+  "frac_insider",
+  "frac_shared_funder",
+  "young_insider_dump",
+  "frac_sniper",
+  "bundle_start_pct"
+ ],
+ "coef": {
+  "frac_insider": 0.19029400393326454,
+  "frac_shared_funder": 0.3368918962778612,
+  "young_insider_dump": 0.03311719872597192,
+  "frac_sniper": 0.06197682156707452,
+  "bundle_start_pct": -0.5536122871453247
+ },
+ "intercept": -1.345008537046229,
+ "mean": {
+  "frac_insider": 0.5838822266730272,
+  "frac_shared_funder": 0.046756884572010625,
+  "young_insider_dump": 0.028431372549019607,
+  "frac_sniper": 0.33340233958876153,
+  "bundle_start_pct": 23.229026923026673
+ },
+ "std": {
+  "frac_insider": 0.38901970494333965,
+  "frac_shared_funder": 0.15192904544467964,
+  "young_insider_dump": 0.06796195938410099,
+  "frac_sniper": 0.3284786389246551,
+  "bundle_start_pct": 26.435564765236254
+ },
+ "trained_on": "357 token\u00f3w eksploracji, 07.10.2026"
+}

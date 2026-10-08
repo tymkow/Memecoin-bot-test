@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ślepy test wykresów</title>
+<style>
+:root { --bg:#f7f7f5; --fg:#1c1c1a; --muted:#6b6b66; --line:#2f6fb3; --vol:#c9c9c2; --grid:#e3e3de; --mig:#c0392b; --card:#fff; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#151514; --fg:#ecece8; --muted:#9a9a93; --line:#6ea8e8; --vol:#3a3a37; --grid:#262624; --mig:#e0705f; --card:#1d1d1b; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width:980px; margin:0 auto; padding:16px; }
+header { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+h1 { font-size:18px; margin:0; }
+.meta { color:var(--muted); font-size:13px; }
+.card { background:var(--card); border-radius:10px; padding:12px; margin-top:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+canvas { width:100%; height:420px; display:block; }
+.btns { display:flex; gap:12px; margin-top:12px; }
+button { flex:1; font-size:17px; padding:14px; border-radius:8px; border:1px solid var(--grid); cursor:pointer; background:var(--card); color:var(--fg); }
+button.buy { border-color:#2e8b57; } button.no { border-color:var(--mig); }
+button:disabled { opacity:.4; cursor:default; }
+.hint { color:var(--muted); font-size:13px; margin-top:8px; }
+.end { text-align:center; padding:40px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ślepy test: kupić w chwili T?</h1>
+    <div class="meta" id="meta">…</div>
+  </header>
+  <div class="card" id="chartCard">
+    <canvas id="c"></canvas>
+    <div class="hint">Cena znormalizowana do ceny w chwili T (= 1, skala logarytmiczna). Oś X: minuty od startu tokena.
+      Czerwona linia = migracja. Wykres kończy się w chwili decyzji T (migracja + 30 min). Słupki = obrót (SOL/min).</div>
+  </div>
+  <div class="btns">
+    <button class="buy" id="buy">Kupić - pewny (K)</button>
+    <button class="buy" id="buyu">Kupić - niepewny (U)</button>
+    <button class="no" id="no">Nie kupić (N)</button>
+  </div>
+  <div class="hint">Wyniki tokenów nie są tu pokazywane - raport po co najmniej 100 ocenach.</div>
+</main>
+<script>
+let cur = null, shownAt = 0;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+async function next() {
+  const r = await fetch('/api/next'); const d = await r.json();
+  if (d.end) {
+    document.getElementById('chartCard').innerHTML = `<div class="end"><p>Koniec sesji. Ocen łącznie: <b>${d.total}</b> z puli ${d.pool}.</p>
+      <p><button id="ns">Następne 25</button></p></div>`;
+    document.getElementById('ns').onclick = async () => { await fetch('/api/new_session'); location.reload(); };
+    for (const id of ['buy', 'buyu', 'no']) document.getElementById(id).disabled = true;
+    document.getElementById('meta').textContent = `łącznie ${d.total} ocen`;
+    return;
+  }
+  cur = d; shownAt = performance.now();
+  document.getElementById('meta').textContent = `sesja ${d.done_session + 1}/${d.session} · łącznie ${d.total} ocen · pula ${d.pool}`;
+  draw(d);
+}
+
+function draw(d) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const pad = {l: 46, r: 10, t: 10, b: 26}, volH = 70;
+  const xs = d.pts.map(p => p[0]), ys = d.pts.map(p => Math.log10(Math.max(p[1], 1e-9)));
+  const x0 = 0, x1 = Math.max(d.T, ...xs), y0 = Math.min(...ys), y1 = Math.max(...ys, 0) + 0.02;
+  const X = x => pad.l + (x - x0) / (x1 - x0 || 1) * (W - pad.l - pad.r);
+  const Y = y => pad.t + (1 - (y - y0) / (y1 - y0 || 1)) * (H - pad.t - pad.b - volH);
+  ctx.strokeStyle = css('--grid'); ctx.fillStyle = css('--muted'); ctx.font = '11px system-ui'; ctx.lineWidth = 1;
+  for (let k = Math.ceil(y0 * 2) / 2; k <= y1; k += 0.5) {
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(k)); ctx.lineTo(W - pad.r, Y(k)); ctx.stroke();
+    ctx.fillText('x' + (10 ** k).toPrecision(2), 4, Y(k) + 4);
+  }
+  const vmax = Math.max(...d.vol.map(v => v[1]), 1e-9), base = H - pad.b;
+  ctx.fillStyle = css('--vol');
+  for (const [m, v] of d.vol) { const w = Math.max(1, X(m + 1) - X(m) - 1); ctx.fillRect(X(m), base - v / vmax * volH, w, v / vmax * volH); }
+  ctx.strokeStyle = css('--mig'); ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(X(d.mig), pad.t); ctx.lineTo(X(d.mig), base); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1.5; ctx.beginPath();
+  d.pts.forEach((p, i) => { const x = X(p[0]), y = Y(Math.log10(Math.max(p[1], 1e-9))); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+  ctx.stroke();
+  ctx.fillStyle = css('--muted');
+  for (let i = 0; i <= 5; i++) { const m = x0 + (x1 - x0) * i / 5; ctx.fillText(m.toFixed(0) + ' min', X(m) - 14, H - 8); }
+}
+
+async function rate(choice) {
+  if (!cur) return;
+  const c = cur; cur = null;
+  await fetch('/api/rate', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({id: c.id, choice, seconds: Math.round((performance.now() - shownAt) / 100) / 10})});
+  next();
+}
+document.getElementById('buy').onclick = () => rate('kupic_pewny');
+document.getElementById('buyu').onclick = () => rate('kupic_niepewny');
+document.getElementById('no').onclick = () => rate('nie');
+document.addEventListener('keydown', e => { if (e.key === 'k' || e.key === 'K') rate('kupic_pewny'); if (e.key === 'u' || e.key === 'U') rate('kupic_niepewny'); if (e.key === 'n' || e.key === 'N') rate('nie'); });
+window.addEventListener('resize', () => cur && draw(cur));
+next();
+</script>
+</body>
+</html>

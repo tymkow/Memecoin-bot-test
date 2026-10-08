@@ -1,0 +1,6 @@
+# Zaufani twórcy - edytuj ręcznie. Używane jako CECHA (dev_trusted), nie bramka.
+# Przenieś adres z 'proposals' do 'trusted', jeśli się zgadzasz. Format: '  - addr: <adres>'.
+trusted:
+
+proposals:   # z danych: >= 2 tokeny z wynikiem > 0 (07.10.2026)
+  - addr: TWÓRCA_PRZYKŁAD   # tokenów 2, z zyskiem 2, śr. wynik +66.9%
